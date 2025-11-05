@@ -1,8 +1,23 @@
-# Food Delivery Platform
+# Food Delivery Platform - Polaris
 
-A scalable food delivery platform built with .NET 8, featuring intelligent rider assignment, restaurant recommendations, and real-time order tracking.
+A production-ready food delivery platform built with .NET 8, featuring intelligent rider assignment, AI-powered restaurant recommendations, and real-time order tracking with GPS-based calculations.
 
-## ?? What Does This Application Do?
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+- [How It Works](#how-it-works)
+- [Data Model](#data-model)
+- [Examples](#examples)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+
+## Overview
 
 This platform connects three types of users through a RESTful API:
 
@@ -12,48 +27,58 @@ This platform connects three types of users through a RESTful API:
 
 ### Core Features
 
-- **Smart Restaurant Recommendations** - Get suggestions based on cuisine preference, location, and desired delivery time
-- **Intelligent Rider Assignment** - Automatically assigns nearest available rider when restaurant accepts order
-- **Real-time Order Tracking** - Complete lifecycle from placement to delivery
-- **Delivery Time Estimation** - Calculates time based on distance and restaurant preparation time
-- **GPS-based Distance Calculations** - Uses Haversine formula for accurate distance measurement
+- **Smart Restaurant Recommendations** - AI-powered suggestions based on cuisine preferences, location proximity, and delivery time constraints
+- **Intelligent Rider Assignment** - Automatic assignment of the nearest available rider using GPS distance calculations
+- **Real-time Order Tracking** - Complete order lifecycle management with status updates
+- **Delivery Time Estimation** - Accurate ETA calculation using distance, preparation time, and traffic buffer
+- **GPS Distance Calculation** - Haversine formula implementation for precise location-based calculations
+- **Clean Architecture** - Separation of concerns with Controllers, Services, and Repositories pattern
 
-## ??? Technology Stack
+## Technology Stack
 
-- **.NET 8** with C# 12.0
-- **Entity Framework Core 8** for database access
-- **SQL Server** for data storage
-- **Swagger/OpenAPI** for API documentation
-- **Clean Architecture** (Controllers ? Services ? Repositories)
+**Backend Framework:**
+- .NET 8 / C# 12.0
+- ASP.NET Core Web API
 
-## ?? What You Need to Run This
+**Database:**
+- Entity Framework Core 8
+- SQL Server (2019+)
+
+**Documentation & Testing:**
+- Swagger / OpenAPI 3.0
+- Postman compatible
+
+**Architecture Pattern:**
+- Clean Architecture
+- Repository Pattern
+- Dependency Injection
+
+## Prerequisites
 
 ### Required Software
 
-1. **[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)** - To build and run the application
-2. **SQL Server** - One of the following:
-   - [SQL Server 2019+](https://www.microsoft.com/sql-server/sql-server-downloads)
-   - SQL Server Express (free)
-   - SQL Server LocalDB (free, comes with Visual Studio)
+1. .NET 8 SDK
+2. SQL Server (2019+, Express, or LocalDB)
 
 ### Optional Tools
 
-- **Visual Studio 2022** or **VS Code** - For development
-- **SQL Server Management Studio** - For database management
-- **Postman** or **curl** - For API testing
+- Visual Studio 2022 (v17.8+) or Visual Studio Code
+- SQL Server Management Studio (SSMS)
+- Postman / Insomnia / curl for API testing
+- Git for version control
 
-## ?? How to Run the Application
+## Getting Started
 
-### Step 1: Clone the Repository
+### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Rachit77s/FoodDeliveryProject.git
 cd FoodDeliveryPolaris
 ```
 
-### Step 2: Configure Database
+### 2. Configure Database Connection
 
-Open `appsettings.json` and verify/update the connection string:
+Edit `appsettings.json` and update the connection string for your SQL Server instance:
 
 ```json
 {
@@ -63,198 +88,435 @@ Open `appsettings.json` and verify/update the connection string:
 }
 ```
 
-**Note**: Adjust `Server=localhost` to your SQL Server instance name if different.
+**Connection String Options:**
 
-### Step 3: Setup Database
+- **LocalDB**: `Server=(localdb)\\mssqllocaldb;Database=FoodDeliveryPolaris;Trusted_Connection=True;`
+- **SQL Express**: `Server=localhost\\SQLEXPRESS;Database=FoodDeliveryPolaris;Trusted_Connection=True;TrustServerCertificate=True`
+- **Azure SQL**: `Server=tcp:yourserver.database.windows.net,1433;Database=FoodDeliveryPolaris;User ID=yourusername;Password=yourpassword;`
+
+### 3. Install Dependencies
 
 ```bash
-# Apply database migrations
+dotnet restore
+```
+
+### 4. Apply Database Migrations
+
+Create the database schema:
+
+```bash
+# Install EF Core tools if not already installed
+dotnet tool install --global dotnet-ef
+
+# Apply migrations to create database tables
 dotnet ef database update
 ```
 
-This creates all necessary tables in SQL Server.
+**Note:** Sample data (users, riders, restaurants, and menu items) will be automatically seeded when you run the application for the first time. The seeder runs only once and checks if data already exists to avoid duplicates.
 
-### Step 4: Run the Application
+### 5. Run the Application
 
 ```bash
 dotnet run
 ```
 
-You should see output like:
+Expected console output:
 
 ```
-info: Microsoft.Hosting.Lifetime[14]
-      Now listening on: https://localhost:7233
+Now listening on: https://localhost:7233
+Applying database migrations...
+Database migrations applied successfully.
+Checking if database seeding is needed...
+Seeding database with sample data...
+Database seeding completed successfully!
+Application started. Press Ctrl+C to shut down.
 ```
 
-### Step 5: Access the Application
+> **First Run:** On the first run in Development mode, the application automatically applies any pending migrations and seeds the database with sample users, riders, restaurants, and menu items. Subsequent runs will skip seeding if data already exists.
 
-Open your browser and go to:
-- **Swagger UI**: https://localhost:7233/swagger
-- **API Base**: https://localhost:7233/api
+### 6. Access the Application
 
-## ?? Project Structure
+- **Swagger UI**: https://localhost:7233/swagger (Interactive API documentation)
+- **Base API**: https://localhost:7233/api
+
+**Available Sample Data After First Run:**
+- 5 Users with addresses across different cities
+- 10 Delivery riders with various locations
+- 5 Restaurants with complete menus (50+ items)
+
+You can immediately start testing the API with these pre-populated IDs (e.g., userId=1, restaurantId=1).
+
+## Project Structure
 
 ```
 FoodDeliveryPolaris/
-??? Controllers/           # API endpoints and HTTP routing
-?   ??? UsersController.cs
-?   ??? RestaurantsController.cs
-?   ??? RidersController.cs
-?   ??? OrdersController.cs
-?   ??? RecommendationsController.cs
-??? Services/              # Business logic and orchestration
-?   ??? UserService.cs
-?   ??? RestaurantService.cs
-?   ??? RiderService.cs
-?   ??? OrderService.cs
-?   ??? FoodRecommendationService.cs
-??? Repositories/          # Data access layer
-?   ??? InMemoryUserRepository.cs
-?   ??? InMemoryRestaurantRepository.cs
-?   ??? InMemoryRiderRepository.cs
-?   ??? InMemoryOrderRepository.cs
-??? Models/                # Domain entities
-?   ??? User.cs
-?   ??? Restaurant.cs
-?   ??? Rider.cs
-?   ??? Order.cs
-?   ??? MenuItem.cs
-?   ??? OrderItem.cs
-?   ??? Address.cs
-?   ??? Location.cs
-??? DTOs/                  # Data Transfer Objects
-?   ??? UserDTOs.cs
-?   ??? RestaurantDTOs.cs
-?   ??? RiderDTOs.cs
-?   ??? OrderDTOs.cs
-?   ??? FoodRecommendationRequest.cs
-??? Validators/            # Input validation
-?   ??? UserValidator.cs
-?   ??? RestaurantValidator.cs
-?   ??? RiderValidator.cs
-?   ??? AddressValidator.cs
-?   ??? ValidationHelpers.cs
-??? Utils/                 # Utility classes
-?   ??? LocationUtils.cs          # GPS distance calculations (Haversine)
-?   ??? DeliveryCalculator.cs     # Delivery time estimation
-??? Exceptions/            # Custom exceptions
-?   ??? NotFoundException.cs
-?   ??? ValidationException.cs
-?   ??? DuplicateEntityException.cs
-??? Data/                  # Database context
-?   ??? FoodDeliveryDbContext.cs
-??? Migrations/            # EF Core migrations
+├── Controllers/           # API endpoints and HTTP routing
+│   ├── UsersController.cs
+│   ├── RestaurantsController.cs
+│   ├── RidersController.cs
+│   ├── OrdersController.cs
+│   └── RecommendationsController.cs
+├── Services/              # Business logic and orchestration
+│   ├── UserService.cs
+│   ├── RestaurantService.cs
+│   ├── RiderService.cs
+│   ├── OrderService.cs
+│   └── FoodRecommendationService.cs
+├── Repositories/          # Data access layer
+│   ├── UserRepository.cs
+│   ├── RestaurantRepository.cs
+│   ├── RiderRepository.cs
+│   └── OrderRepository.cs
+├── Models/                # Domain entities
+│   ├── User.cs
+│   ├── Restaurant.cs
+│   ├── Rider.cs
+│   ├── Order.cs
+│   ├── MenuItem.cs
+│   ├── OrderItem.cs
+│   ├── Address.cs
+│   └── Location.cs
+├── DTOs/                  # Data Transfer Objects
+│   ├── UserDTOs.cs
+│   ├── RestaurantDTOs.cs
+│   ├── RiderDTOs.cs
+│   ├── OrderDTOs.cs
+│   ├── MenuItemDTOs.cs
+│   └── FoodRecommendationRequest.cs
+├── Validators/            # Input validation
+│   ├── UserValidator.cs
+│   ├── RestaurantValidator.cs
+│   ├── RiderValidator.cs
+│   └── AddressValidator.cs
+├── Utils/                 # Utility classes
+│   ├── LocationUtils.cs          # GPS distance calculations (Haversine)
+│   └── DeliveryCalculator.cs     # Delivery time estimation
+├── Exceptions/            # Custom exceptions
+│   ├── NotFoundException.cs
+│   ├── ValidationException.cs
+│   └── DuplicateEntityException.cs
+├── Data/                  # Database context and seeding
+│   ├── FoodDeliveryDbContext.cs
+│   └── DatabaseSeeder.cs
+└── Migrations/            # EF Core migrations
 ```
 
-## ?? What APIs Are Available?
+## API Documentation
 
-| Category | What It Does |
-|----------|--------------|
-| **Users** (`/api/users`) | Register users, manage profiles, view order history |
-| **Restaurants** (`/api/restaurants`) | Register restaurants, manage menus, accept orders |
-| **Riders** (`/api/riders`) | Register riders, update GPS location, manage deliveries |
-| **Orders** (`/api/orders`) | Place orders, track status, view details |
-| **Recommendations** (`/api/recommendations`) | Get restaurant suggestions by cuisine and time |
+### Available Endpoints
 
-**Complete API documentation** with interactive testing available at `/swagger` when running.
+| Endpoint | Methods | Description |
+|----------|---------|-------------|
+| `/api/users` | GET, POST, PUT | User registration, profile management, order history |
+| `/api/restaurants` | GET, POST, PUT | Restaurant management, menu operations, order acceptance |
+| `/api/riders` | GET, POST, PUT, PATCH | Rider management, location updates, availability status |
+| `/api/orders` | GET, POST, PUT | Order placement, tracking, and management |
+| `/api/recommendations` | GET | AI-powered restaurant recommendations |
 
-## ?? Quick Example
+### Key API Operations
 
-Once the application is running, try this:
+#### Users
+- `POST /api/users` - Register new user
+- `GET /api/users/{id}` - Get user profile
+- `GET /api/users/{id}/orders` - Get user order history
 
-**Get Restaurant Recommendations:**
+#### Restaurants
+- `GET /api/restaurants` - List all restaurants
+- `POST /api/restaurants` - Register new restaurant
+- `GET /api/restaurants/{id}/menu` - Get restaurant menu
+- `POST /api/restaurants/{id}/accept-order` - Accept an order
+
+#### Riders
+- `GET /api/riders` - List all riders
+- `POST /api/riders` - Register new rider
+- `PATCH /api/riders/{id}/location` - Update rider GPS location
+- `PATCH /api/riders/{id}/status` - Update rider availability
+
+#### Orders
+- `POST /api/orders` - Place new order
+- `GET /api/orders/{id}` - Get order details
+- `PUT /api/orders/{id}/status` - Update order status
+
+#### Recommendations
+- `GET /api/recommendations?userId={id}&cuisineType={type}&maxTimeMinutes={minutes}` - Get personalized restaurant recommendations
+
+For detailed request/response schemas, visit the Swagger UI at `/swagger`.
+
+## Examples
+
+### Get Restaurant Recommendations
 
 ```bash
 curl "https://localhost:7233/api/recommendations?userId=1&cuisineType=NorthIndian&maxTimeMinutes=60"
 ```
 
-**Place an Order:**
+**Response:**
+```json
+[
+  {
+    "restaurantId": 1,
+    "name": "Spice Garden",
+    "cuisineType": "NorthIndian",
+    "rating": 4.5,
+    "distanceKm": 2.3,
+    "estimatedDeliveryMinutes": 25,
+    "isOpen": true
+  }
+]
+```
+
+### Place an Order
 
 ```bash
-curl -X POST "https://localhost:7233/api/orders" \
+curl -X POST https://localhost:7233/api/orders \
   -H "Content-Type: application/json" \
   -d '{
     "userId": 1,
     "restaurantId": 1,
-    "items": [{"menuItemId": 1, "quantity": 2}]
+    "deliveryAddress": {
+      "street": "123 Main St",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "zipCode": "400001"
+    },
+    "items": [
+      {
+        "menuItemId": 1,
+        "quantity": 2,
+        "specialInstructions": "Extra spicy"
+      }
+    ]
   }'
 ```
 
-More examples and interactive testing in Swagger UI.
+**Response:**
+```json
+{
+  "orderId": 101,
+  "userId": 1,
+  "restaurantId": 1,
+  "status": "Pending",
+  "totalAmount": 450.00,
+  "estimatedDeliveryTime": "2025-11-06T14:30:00Z",
+  "items": [
+    {
+      "menuItemId": 1,
+      "itemName": "Butter Chicken",
+      "quantity": 2,
+      "price": 225.00
+    }
+  ]
+}
+```
 
-## ?? How It Works
+## How It Works
+
+### Order Lifecycle
+
+1. **Order Placement** - Customer selects items and places order (Status: `Pending`)
+2. **Restaurant Acceptance** - Restaurant reviews and accepts order (Status: `Confirmed`)
+3. **Rider Assignment** - System automatically assigns nearest available rider (Status: `Preparing`)
+4. **Pickup** - Rider picks up the order from restaurant (Status: `PickedUp`)
+5. **Delivery** - Rider delivers to customer (Status: `Delivered`)
 
 ### Intelligent Rider Assignment
 
 When a restaurant accepts an order:
-1. System finds all available riders
-2. Calculates GPS distance from each rider to restaurant (Haversine formula)
-3. Assigns nearest rider automatically
-4. Updates rider status to "Busy"
 
-### Delivery Time Calculation
+1. **Query Available Riders** - System finds all riders with status `Available`
+2. **Calculate Distances** - Uses Haversine formula to compute distance from each rider to restaurant
+3. **Select Optimal Rider** - Chooses the nearest rider
+4. **Update Status** - Marks rider as `Busy` and order as `Preparing`
+5. **Notification** - (Future: Send push notification to rider)
+
+### Delivery Time Estimation
+
+The system calculates estimated delivery time using multiple factors:
 
 ```
-Total Time = Restaurant Prep Time + Travel Time + 5 min buffer
-Travel Time = (Distance in km / 20 km/h) � 60
+Total Time = Preparation Time + Travel Time + Buffer
+
+Where:
+- Preparation Time: Restaurant's cooking time (e.g., 20 minutes)
+- Travel Time: (Distance in KM / Average Speed 20 km/h) * 60
+- Buffer: Safety margin (5 minutes)
 ```
 
-Example: Restaurant 3 km away with 25 min prep time = 25 + 9 + 5 = 39 minutes
+**Example:**
+```
+Restaurant prep time: 20 min
+Distance: 5 km
+Travel time: (5 / 20) * 60 = 15 min
+Buffer: 5 min
+Total: 40 minutes
+```
 
-### Restaurant Recommendations
+### Restaurant Recommendations Algorithm
 
-Filters restaurants by:
-- Open/closed status
-- Within delivery radius
-- Matching cuisine type
-- Can deliver within requested time
+The recommendation engine uses a multi-criteria approach:
 
-Then sorts by: fastest delivery ? highest rating ? nearest distance
+1. **Filter Criteria:**
+   - Restaurant must be currently open
+   - Within specified radius (default: 10 km)
+   - Matches requested cuisine type
+   - Can deliver within requested time window
 
-## ?? Data Model
+2. **Ranking Factors:**
+   - Estimated total delivery time (weight: 40%)
+   - Restaurant rating (weight: 35%)
+   - Distance from user (weight: 25%)
 
-The application manages these main entities:
+3. **Results:** Returns top 10 restaurants sorted by composite score
 
-- **User** - Customer with delivery address and order history
-- **Restaurant** - Profile, menu items, delivery radius, operating hours
-- **Rider** - Delivery partner with real-time GPS location
-- **Order** - Items, status, assigned rider, delivery details
-- **MenuItem** - Dishes with prices, cuisine types, preparation times
+## Data Model
 
-## ?? Important Notes
+### Core Entities
 
-**Current Limitations:**
-- Uses user ID for authentication (no JWT/OAuth yet)
-- No payment gateway integration
-- No SMS/email notifications
-- Data stored in SQL Server
+#### User
+```csharp
+- Id (int)
+- Name (string)
+- Email (string)
+- PhoneNumber (string)
+- Address (Address)
+- CreatedAt (DateTime)
+```
 
-**Not for Production Use** - This is a demonstration/learning project. Production deployment requires additional security, authentication, and infrastructure.
+#### Restaurant
+```csharp
+- Id (int)
+- Name (string)
+- CuisineType (enum)
+- Location (Location - GPS coordinates)
+- Address (Address)
+- Rating (decimal)
+- IsOpen (bool)
+- AveragePreparationTimeMinutes (int)
+- MenuItems (List<MenuItem>)
+```
 
-## ?? Future Enhancements
+#### Rider
+```csharp
+- Id (int)
+- Name (string)
+- PhoneNumber (string)
+- VehicleType (string)
+- CurrentLocation (Location - GPS coordinates)
+- Status (enum: Available, Busy, Offline)
+- Rating (decimal)
+```
 
-For production deployment, consider adding:
-- JWT authentication & authorization
-- Payment gateway integration (Stripe/Razorpay)
-- Real-time notifications (SMS/email)
-- Redis caching for performance
-- WebSocket/SignalR for live tracking
-- Message queue for async processing
-- Geographic data partitioning for scale
+#### Order
+```csharp
+- Id (int)
+- UserId (int)
+- RestaurantId (int)
+- RiderId (int?)
+- Status (enum: Pending, Confirmed, Preparing, PickedUp, Delivered, Cancelled)
+- Items (List<OrderItem>)
+- TotalAmount (decimal)
+- DeliveryAddress (Address)
+- OrderedAt (DateTime)
+- EstimatedDeliveryTime (DateTime)
+```
 
-## ?? Troubleshooting
+#### MenuItem
+```csharp
+- Id (int)
+- RestaurantId (int)
+- Name (string)
+- Description (string)
+- Price (decimal)
+- IsAvailable (bool)
+- Category (string)
+```
 
-**Database connection fails:**
-- Verify SQL Server is running
-- Check connection string in `appsettings.json`
-- Ensure SQL Server allows TCP/IP connections
+### Entity Relationships
 
-**Migration fails:**
-- Install EF Core tools: `dotnet tool install --global dotnet-ef`
-- Clear migrations and recreate if needed
+```
+User (1) -----> (*) Order
+Restaurant (1) -----> (*) Order
+Restaurant (1) -----> (*) MenuItem
+Rider (1) -----> (*) Order
+Order (1) -----> (*) OrderItem
+MenuItem (1) -----> (*) OrderItem
+```
 
-**Port already in use:**
-- Change port in `Properties/launchSettings.json`
-- Or stop other applications using port 7233
+## Configuration
+
+### Application Settings
+
+Key configuration options in `appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "..."
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "DeliverySettings": {
+    "MaxDeliveryRadiusKm": 10,
+    "AverageSpeedKmPerHour": 20,
+    "BufferMinutes": 5
+  }
+}
+```
+
+### Environment Variables
+
+For production deployment:
+
+```bash
+export ASPNETCORE_ENVIRONMENT=Production
+export ConnectionStrings__DefaultConnection="Server=...;Database=...;"
+export ASPNETCORE_URLS="https://+:443;http://+:80"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Database Connection Fails
+
+**Problem:** `Cannot open database "FoodDeliveryPolaris"`
+
+**Solution:**
+1. Verify SQL Server is running: `sqlcmd -S localhost -Q "SELECT @@VERSION"`
+2. Check connection string in `appsettings.json`
+3. Ensure database exists: `dotnet ef database update`
+
+#### EF Core Tools Not Found
+
+**Problem:** `dotnet ef command not found`
+
+**Solution:**
+```bash
+dotnet tool install --global dotnet-ef
+dotnet tool update --global dotnet-ef
+```
+
+#### Port Already in Use
+
+**Problem:** `Address already in use: localhost:7233`
+
+**Solution:**
+- Modify port in `Properties/launchSettings.json`:
+```json
+"applicationUrl": "https://localhost:7234;http://localhost:5234"
+```
+
+## Important Notes
+
+- **No Authentication:** User IDs are passed directly in requests (suitable for prototyping only)
+- **No Payment Processing:** Orders track amounts but don't process actual payments
+- **No Real-time Notifications:** Status updates are pull-based (check order status manually)
+- **Simplified Distance Calculation:** Uses Haversine formula (doesn't account for actual road routes)
+- **No Concurrent Order Handling:** Riders handle one order at a time
+- **Prototype Status:** Not production-hardened (missing rate limiting, advanced error handling, security features)
 
