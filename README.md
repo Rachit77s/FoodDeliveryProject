@@ -10,12 +10,18 @@ A production-ready food delivery platform built with .NET 8, featuring intellige
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
+- [Database Schema & Scalability](#database-schema--scalability)
+- [Technical Design](#technical-design)
 - [API Documentation](#api-documentation)
+- [Testing Guide](#testing-guide)
 - [How It Works](#how-it-works)
 - [Data Model](#data-model)
 - [Examples](#examples)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
+- [Important Notes](#important-notes)
+- [Future Enhancements](#future-enhancements)
+- [Contributing](#contributing)
 
 ## Overview
 
@@ -201,46 +207,247 @@ FoodDeliveryPolaris/
 └── Migrations/            # EF Core migrations
 ```
 
+## Database Schema & Scalability
+
+For comprehensive **database architecture, table structures, and scaling strategies**, see:
+
+� **[Database Schema Documentation](docs/DATABASE_SCHEMA.md)**
+
+This detailed guide covers:
+
+- **Domain Model & Concepts** - Understanding Users, Restaurants, Riders, Orders and their relationships
+- **Entity Relationships** - Complete ER diagrams showing all 9 relationship types with visual examples
+- **Relationship Patterns** - Owned entities (Address, Location), aggregates, references, snapshot pattern
+- **Table Mapping** - How domain concepts naturally map to physical database tables
+- **All 6 Tables Documented** - Users, Restaurants, Riders, Orders, MenuItem, OrderItem with SQL schemas
+- **Indexes & Performance** - Primary keys, foreign keys, composite indexes, geospatial optimization
+- **Data Types & Constraints** - Rationale for DECIMAL, FLOAT, DATETIME2, NVARCHAR choices
+- **Scalability Roadmap** - Phase 1 (prototype) → Phase 4 (10M users, 100K restaurants)
+- **Sharding Strategies** - Geographic, user ID range, and hybrid approaches
+- **Table Partitioning** - Orders partitioned by month for performance
+- **Caching Strategy** - Redis integration, TTL policies, cache invalidation patterns
+- **Query Optimization** - Eliminating N+1 queries, eager loading, batch operations
+- **Monitoring & Maintenance** - Key metrics, slow query detection, index fragmentation
+
+**Quick Facts:**
+
+**Current Capacity (Phase 1):**
+- Single SQL Server
+- <10,000 users, <1,000 restaurants
+- 5,000 orders/day
+
+**Target Capacity (Phase 4):**
+- 30 geographic shards
+- 10M users, 100K restaurants
+- 1M orders/day (12 orders/second avg, 50 peak)
+- 100,000 queries/second (with caching)
+
+**Storage Estimates:**
+- User: ~300 bytes → 10M users = 3 GB
+- Restaurant: ~8 KB (with menu) → 100K = 800 MB
+- Order: ~550 bytes → 100M/year = 55 GB/year
+
+**Key Relationships:**
+```
+User ──[has]──► Address ──[has]──► Location
+Restaurant ──[has]──► Address ──[has]──► Location
+Restaurant ──[has]──► Menu ──[contains]──► MenuItem (1:N)
+Order ──[connects]──► User, Restaurant, Rider, OrderItems
+```
+
+## Technical Design
+
+### Understanding the System Logic
+
+For detailed explanations of **assumptions, algorithms, and business logic**, see:
+
+🔧 **[Technical Design Documentation](docs/TECHNICAL_DESIGN.md)**
+
+This comprehensive document covers:
+
+- **Rider Assignment Algorithm** - How we select the nearest available rider (Haversine distance + sorting)
+- **Restaurant Recommendation Engine** - Multi-stage filtering pipeline with ranking logic
+- **Distance Calculation** - Haversine formula implementation and accuracy analysis
+- **Delivery Time Estimation** - Speed assumptions (20 km/h) and buffer calculations (5 min)
+- **Order Placement Flow** - Complete lifecycle from cart to delivery
+- **Validation Rules** - What we check and why
+- **Performance Optimizations** - Early filtering, database queries, spatial indexing plans
+- **Edge Cases & Error Handling** - No riders available, out of range, race conditions
+- **Future Improvements** - Predictive routing, dynamic pricing, ML enhancements
+
+**Quick Examples from Technical Design:**
+
+**Rider Selection Logic:**
+```
+1. Get all available riders (status = Available)
+2. Calculate distance from each rider to restaurant (Haversine)
+3. Sort by distance ascending
+4. Select nearest rider
+5. Update: rider.status = Busy, order.status = Preparing
+```
+
+**Recommendation Ranking:**
+```
+Sort by:
+  1. Total time (40% weight) - Fastest delivery
+  2. Rating (35% weight) - Quality
+  3. Distance (25% weight) - Proximity tie-breaker
+```
+
 ## API Documentation
 
-### Available Endpoints
+### Quick Reference
+
+For **complete and detailed API documentation** with request/response examples, error codes, and code samples, see:
+
+� **[Complete API Documentation](docs/API_DOCUMENTATION.md)**
+
+### API Overview
 
 | Endpoint | Methods | Description |
 |----------|---------|-------------|
-| `/api/users` | GET, POST, PUT | User registration, profile management, order history |
-| `/api/restaurants` | GET, POST, PUT | Restaurant management, menu operations, order acceptance |
-| `/api/riders` | GET, POST, PUT, PATCH | Rider management, location updates, availability status |
-| `/api/orders` | GET, POST, PUT | Order placement, tracking, and management |
+| `/api/users` | GET, POST, PUT, DELETE | User registration, profile management, order history |
+| `/api/restaurants` | GET, POST, PUT, DELETE | Restaurant management, menu operations, order acceptance |
+| `/api/riders` | GET, POST, PUT, DELETE, PATCH | Rider management, location updates, availability status |
+| `/api/orders` | GET, POST, PUT, DELETE | Order placement, tracking, and management |
 | `/api/recommendations` | GET | AI-powered restaurant recommendations |
 
-### Key API Operations
+### Interactive Documentation
 
-#### Users
-- `POST /api/users` - Register new user
-- `GET /api/users/{id}` - Get user profile
-- `GET /api/users/{id}/orders` - Get user order history
+- **Swagger UI**: https://localhost:7233/swagger
+- Try out endpoints directly from your browser
+- View real-time request/response schemas
+- Test with pre-populated sample data
 
-#### Restaurants
-- `GET /api/restaurants` - List all restaurants
-- `POST /api/restaurants` - Register new restaurant
-- `GET /api/restaurants/{id}/menu` - Get restaurant menu
-- `POST /api/restaurants/{id}/accept-order` - Accept an order
+### Quick API Operations
 
-#### Riders
-- `GET /api/riders` - List all riders
-- `POST /api/riders` - Register new rider
-- `PATCH /api/riders/{id}/location` - Update rider GPS location
-- `PATCH /api/riders/{id}/status` - Update rider availability
+**Most Common Endpoints:**
 
-#### Orders
-- `POST /api/orders` - Place new order
-- `GET /api/orders/{id}` - Get order details
-- `PUT /api/orders/{id}/status` - Update order status
+| Operation | Endpoint | Method |
+|-----------|----------|--------|
+| Register user | `/api/users` | POST |
+| Get recommendations | `/api/recommendations?userId=1&cuisineType=NorthIndian` | GET |
+| Place order | `/api/orders` | POST |
+| Accept order | `/api/restaurants/{id}/orders/{orderId}/accept` | POST |
+| Update rider location | `/api/riders/{id}/location` | PUT |
+| Track order | `/api/orders/{id}` | GET |
 
-#### Recommendations
-- `GET /api/recommendations?userId={id}&cuisineType={type}&maxTimeMinutes={minutes}` - Get personalized restaurant recommendations
+> 💡 **Tip:** For detailed request/response examples, authentication details, error codes, and code samples in multiple languages, refer to the [Complete API Documentation](docs/API_DOCUMENTATION.md).
 
-For detailed request/response schemas, visit the Swagger UI at `/swagger`.
+---
+
+## Testing Guide
+
+### Hands-On Testing Tutorial
+
+Want to **learn by doing**? Follow our comprehensive step-by-step testing guide to test the complete order flow from start to finish!
+
+📚 **[Complete Testing Guide](docs/TESTING_GUIDE.md)** - 50+ pages of hands-on tutorial
+
+### What's Covered
+
+The testing guide walks you through **9 complete phases** of the order lifecycle:
+
+1. **Setup Test Data** - Create users, restaurants, riders, and menu items
+2. **Browse Restaurants** - Get AI-powered recommendations based on location/cuisine
+3. **Preview Order** - Calculate cart total and delivery estimates
+4. **Place Order** - Submit order with automatic rider assignment
+5. **Restaurant Accepts** - Confirm and start preparing the order
+6. **Rider Picks Up** - Collect food and update location
+7. **Delivery in Progress** - Track rider movement to customer
+8. **Order Delivered** - Complete delivery and process payment
+9. **Verify Flow** - Check order history from all perspectives
+
+### Key Features
+
+✅ **Step-by-Step Swagger Instructions** - Click-by-click guidance for every API call  
+✅ **Copy-Paste JSON Examples** - Ready-to-use request payloads  
+✅ **Behind-the-Scenes Explanations** - Understand what happens at each step  
+✅ **Common Scenarios** - Test edge cases (closed restaurant, no riders, unavailable items)  
+✅ **Troubleshooting** - Solutions for 7+ common problems  
+✅ **Quick Reference Table** - All endpoints at a glance  
+
+### Quick Start Testing
+
+```bash
+# 1. Start the application
+dotnet run
+
+# 2. Open Swagger UI in browser
+https://localhost:5001/swagger
+
+# 3. Follow the testing guide
+# docs/TESTING_GUIDE.md
+
+# 4. Complete the full order flow in 30-45 minutes!
+```
+
+### Perfect For
+
+- 🆕 **New developers** wanting to understand the system quickly
+- 🧪 **QA testers** learning the testing workflow  
+- 🎓 **Anyone** who prefers hands-on learning
+- 🎯 **Demonstrations** of platform capabilities
+
+### Sample Test Scenario
+
+Here's a quick example from the guide:
+
+```json
+// Step 1: Create a test user
+POST /api/users
+{
+  "name": "Test Customer",
+  "email": "customer@test.com",
+  "phone": "+919876543210",
+  "address": {
+    "street": "123 Main Street",
+    "city": "Mumbai",
+    "zipCode": "400001",
+    "location": {
+      "latitude": 19.0760,
+      "longitude": 72.8777
+    }
+  }
+}
+
+// Step 2: Get restaurant recommendations
+POST /api/recommendations
+{
+  "userId": 1,
+  "cuisineType": "Italian",
+  "maxDeliveryTimeMinutes": 45
+}
+
+// Step 3: Place an order
+POST /api/orders
+{
+  "userId": 1,
+  "restaurantId": 5,
+  "items": [
+    { "menuItemId": 101, "quantity": 2 },
+    { "menuItemId": 102, "quantity": 1 }
+  ],
+  "deliveryAddress": {
+    "latitude": 19.0760,
+    "longitude": 72.8777
+  }
+}
+
+// ... and 6 more phases!
+```
+
+> 💡 **Tip:** The testing guide includes troubleshooting for common issues, time estimates for each phase, and tips for testing edge cases.
+
+---
+
+## Examples
+| Place order | `/api/orders` | POST |
+| Accept order | `/api/restaurants/{id}/orders/{orderId}/accept` | POST |
+| Update rider location | `/api/riders/{id}/location` | PUT |
+| Track order | `/api/orders/{id}` | GET |
+
+> 💡 **Tip:** For detailed request/response examples, authentication details, error codes, and code samples in multiple languages, refer to the [Complete API Documentation](docs/API_DOCUMENTATION.md).
 
 ## Examples
 
